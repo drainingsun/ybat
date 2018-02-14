@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Boobs - YOLO BBox Annotation Tool</title>
+
+    <link href="boobs.css" rel="stylesheet">
+
+    <script src="canvas.min.js"></script>
+    <script src="jszip.min.js"></script>
+
+    <script src="boobs.js"></script>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="left">
+            <form action="">
+                <label for="images">Images:</label>
+                <input type="file" id="images" name="images[]" accept="image/jpeg, image/png" multiple />
+                <label for="imageList"></label><select name="imageList" id="imageList" size="10" multiple></select>
+
+                <hr />
+
+                <label for="classes">Classes:</label>
+                <input type="file" id="classes" name="classes" accept="text/plain" />
+                <label for="classList"></label><select name="classList" id="classList" size="10" multiple></select>
+
+                <hr />
+
+                <label for="bboxes">Bboxes:</label>
+                <input type="file" id="bboxes" name="bboxes" accept="application/zip" disabled />
+                <input type="button" name="restoreBboxes" id="restoreBboxes" value="Restore" disabled />
+                <input type="button" name="saveBboxes" id="saveBboxes" value="Save" />
+
+                <hr />
+
+                <div id="description">
+                    NAVIGATION:
+                    <ul>
+                        <li>
+                            Mouse WHEEL - zoom in/out image
+                        </li>
+                        <li>
+                            Mouse RIGHT BUTTON - pan image
+                        </li>
+                        <li>
+                            Arrows LEFT and RIGHT - cycle images
+                        </li>
+                        <li>
+                            Arrows Up and DOWN - cycle classes
+                        </li>
+                        <li>
+                            Keys BACKSPACE and DELETE - remove selected Bbox
+                        </li>
+                    </ul>
+
+                    <p>Copyright © 2018 Draining Sun.</p>
+                </div>
+            </form>
+        </div>
+
+        <div class="right" id="right">
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+body {
+    overflow: hidden;
+}
+.container {
+    display: block;
+    position: absolute;
+    height: auto;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.column_wrap {
+    position: relative;
+}
+
+.left {
+    width: calc(30% - 10px);
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: auto;
+    display: block;
+    margin: 10px 0 10px 10px;
+}
+
+.right {
+    border-left: 1px solid gray;
+    margin: 10px 10px 10px calc(30% + 10px);
+}
+
+#images, #classes, #bboxes {
+    width: 170px;
+    margin-top: 10px;
+}
+
+#imageList, #classList, #description {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#saveClasses, #saveBboxes, #restoreBboxes {
+    float: right;
+    margin-left: 10px;
+    margin-top: 10px;
+}

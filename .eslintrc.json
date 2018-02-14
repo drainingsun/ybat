@@ -1,0 +1,69 @@
+{
+    "env": {
+        "es6": true,
+        "browser": true
+    },
+    "globals": {
+        "Canvas": true,
+        "JSZip": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "sourceType": "script"
+    },
+    "rules": {
+        "max-len": [
+            "error",
+            120,
+            4
+        ],
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "one-var": [
+            2,
+            "never"
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "semi": [
+            "error",
+            "never"
+        ],
+        "eqeqeq": 2,
+        "callback-return": 2,
+        "handle-callback-err": 2,
+        "no-mixed-requires": 2,
+        "no-new-require": 2,
+        "no-tabs": 2,
+        "no-continue": 2,
+        "brace-style": 2,
+        "camelcase": 2,
+        "comma-style": 2,
+        "func-style": 2,
+        "newline-after-var": 2,
+        "newline-before-return": 2,
+        "newline-per-chained-call": 2,
+        "object-property-newline": 2,
+        "object-curly-newline": 2,
+        "object-curly-spacing": 2,
+        "comma-dangle": 2,
+        "array-bracket-spacing": 2,
+        "block-spacing": 2,
+        "computed-property-spacing": 2,
+        "func-call-spacing": 2,
+        "key-spacing": 2,
+        "keyword-spacing": 2,
+        "new-parens": 2
+    }
+}
