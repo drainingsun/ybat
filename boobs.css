@@ -29,6 +29,7 @@ body {
 .right {
     border-left: 1px solid gray;
     margin: 10px 10px 10px calc(30% + 10px);
+    padding-left: 10px;
 }
 
 #images, #classes, #bboxes {

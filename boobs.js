@@ -94,7 +94,7 @@
     }
 
     const drawImage = (context) => {
-        context.drawImage(currentImage.object, zoomX(20), zoomY(0), zoom(currentImage.width), zoom(currentImage.height))
+        context.drawImage(currentImage.object, zoomX(0), zoomY(0), zoom(currentImage.width), zoom(currentImage.height))
     }
 
     const drawIntro = (context) => {
@@ -719,35 +719,37 @@
                                         }
                                     }
 
-                                    const rows = text.split("\n")
+                                    if (bbox) {
+                                        const rows = text.split("\n")
 
-                                    for (let i = 0; i < rows.length; i++) {
-                                        const cols = rows[i].split(" ")
+                                        for (let i = 0; i < rows.length; i++) {
+                                            const cols = rows[i].split(" ")
 
-                                        cols[0] = parseInt(cols[0])
+                                            cols[0] = parseInt(cols[0])
 
-                                        for (let className in classes) {
-                                            if (classes[className] === cols[0]) {
-                                                if (typeof bbox[className] === "undefined") {
-                                                    bbox[className] = []
+                                            for (let className in classes) {
+                                                if (classes[className] === cols[0]) {
+                                                    if (typeof bbox[className] === "undefined") {
+                                                        bbox[className] = []
+                                                    }
+
+                                                    // Reverse engineer actual position and dimensions from yolo format
+                                                    const width = Math.floor(cols[3] * image.width)
+                                                    const x = Math.floor(cols[1] * image.width)
+                                                    const height = Math.floor(cols[4] * image.height)
+                                                    const y = Math.floor(cols[2] * image.height)
+
+                                                    bbox[className].push({
+                                                        x: x - width * 0.5,
+                                                        y: y - height * 0.5,
+                                                        width: width,
+                                                        height: height,
+                                                        marked: false,
+                                                        class: className
+                                                    })
+
+                                                    break
                                                 }
-
-                                                // Reverse engineer actual position and dimensions from yolo format
-                                                const width = Math.floor(cols[3] * image.width)
-                                                const x = Math.floor(cols[1] * image.width)
-                                                const height = Math.floor(cols[4] * image.height)
-                                                const y = Math.floor(cols[2] * image.height)
-
-                                                bbox[className].push({
-                                                    x: x - width * 0.5,
-                                                    y: y - height * 0.5,
-                                                    width: width,
-                                                    height: height,
-                                                    marked: false,
-                                                    class: className
-                                                })
-
-                                                break
                                             }
                                         }
                                     }
