@@ -17,7 +17,8 @@
     const minZoom = 0.1 // Min size of original
     const maxZoom = 5 // Max size of original
     const edgeSize = 5 // Pixels
-    let scale = 0.5 // Default zoom level
+    const resetCanvasOnChange = true // Or false
+    const defaultScale = 0.5 // Default zoom level
 
     // Main containers
     let canvas = null
@@ -34,6 +35,7 @@
     let classListIndex = 0
 
     // Scaling containers
+    let scale = defaultScale
     let canvasX = 0
     let canvasY = 0
     let screenX = 0
@@ -76,6 +78,7 @@
             listenBboxSave()
             listenBboxRestore()
             listenKeyboard()
+            listenImageSearch()
         }
     }
 
@@ -508,7 +511,10 @@
                     const nameParts = files[i].name.split(".")
 
                     if (extensions.indexOf(nameParts[nameParts.length - 1]) !== -1) {
-                        images[files[i].name] = {meta: files[i]}
+                        images[files[i].name] = {
+                            meta: files[i],
+                            index: i
+                        }
 
                         const option = document.createElement("option")
 
@@ -690,80 +696,100 @@
         document.getElementById("bboxes").addEventListener("change", (event) => {
             resetBboxes()
 
-            const reader = new FileReader()
+            const files = event.target.files
 
-            reader.addEventListener("load", () => {
-                const zip = new JSZip()
+            if (files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    const reader = new FileReader()
 
-                zip.loadAsync(reader.result)
-                    .then((result) => {
-                        for (let filename in result.files) {
-                            result.file(filename).async("string")
-                                .then((text) => {
-                                    let image = null
-                                    let bbox = null
+                    const nameParts = files[i].name.split(".")
 
-                                    for (let i = 0; i < extensions.length; i++) {
-                                        const imageName = filename.replace(".txt", `.${extensions[i]}`)
+                    reader.addEventListener("load", () => {
+                        if (nameParts[nameParts.length - 1] === "txt") {
+                            storeBbox(files[i].name, reader.result)
+                        } else {
+                            const zip = new JSZip()
 
-                                        if (typeof images[imageName] !== "undefined") {
-                                            image = images[imageName]
-
-                                            if (typeof bboxes[imageName] === "undefined") {
-                                                bboxes[imageName] = {}
-                                            }
-
-                                            bbox = bboxes[imageName]
-
-                                            break
-                                        }
-                                    }
-
-                                    if (bbox) {
-                                        const rows = text.split("\n")
-
-                                        for (let i = 0; i < rows.length; i++) {
-                                            const cols = rows[i].split(" ")
-
-                                            cols[0] = parseInt(cols[0])
-
-                                            for (let className in classes) {
-                                                if (classes[className] === cols[0]) {
-                                                    if (typeof bbox[className] === "undefined") {
-                                                        bbox[className] = []
-                                                    }
-
-                                                    // Reverse engineer actual position and dimensions from yolo format
-                                                    const width = Math.floor(cols[3] * image.width)
-                                                    const x = Math.floor(cols[1] * image.width)
-                                                    const height = Math.floor(cols[4] * image.height)
-                                                    const y = Math.floor(cols[2] * image.height)
-
-                                                    bbox[className].push({
-                                                        x: x - width * 0.5,
-                                                        y: y - height * 0.5,
-                                                        width: width,
-                                                        height: height,
-                                                        marked: false,
-                                                        class: className
-                                                    })
-
-                                                    break
-                                                }
-                                            }
-                                        }
+                            zip.loadAsync(reader.result)
+                                .then((result) => {
+                                    for (let filename in result.files) {
+                                        result.file(filename).async("string")
+                                            .then((text) => {
+                                                storeBbox(filename, text)
+                                            })
                                     }
                                 })
                         }
                     })
-            })
 
-            reader.readAsArrayBuffer(event.target.files[0])
+                    if (nameParts[nameParts.length - 1] === "txt") {
+                        reader.readAsText(files[i])
+                    } else {
+                        reader.readAsArrayBuffer(event.target.files[i])
+                    }
+                }
+            }
         })
     }
 
     const resetBboxes = () => {
         bboxes = {}
+    }
+
+    const storeBbox = (filename, text) => {
+        let image = null
+        let bbox = null
+
+        for (let i = 0; i < extensions.length; i++) {
+            const imageName = filename.replace(".txt", `.${extensions[i]}`)
+
+            if (typeof images[imageName] !== "undefined") {
+                image = images[imageName]
+
+                if (typeof bboxes[imageName] === "undefined") {
+                    bboxes[imageName] = {}
+                }
+
+                bbox = bboxes[imageName]
+
+                break
+            }
+        }
+
+        if (bbox) {
+            const rows = text.split("\n")
+
+            for (let i = 0; i < rows.length; i++) {
+                const cols = rows[i].split(" ")
+
+                cols[0] = parseInt(cols[0])
+
+                for (let className in classes) {
+                    if (classes[className] === cols[0]) {
+                        if (typeof bbox[className] === "undefined") {
+                            bbox[className] = []
+                        }
+
+                        // Reverse engineer actual position and dimensions from yolo format
+                        const width = Math.floor(cols[3] * image.width)
+                        const x = Math.floor(cols[1] * image.width - width * 0.5)
+                        const height = Math.floor(cols[4] * image.height)
+                        const y = Math.floor(cols[2] * image.height - height * 0.5)
+
+                        bbox[className].push({
+                            x: x,
+                            y: y,
+                            width: width,
+                            height: height,
+                            marked: false,
+                            class: className
+                        })
+
+                        break
+                    }
+                }
+            }
+        }
     }
 
     const listenBboxSave = () => {
@@ -833,10 +859,12 @@
         document.addEventListener("keydown", (event) => {
             const key = event.keyCode || event.charCode
 
-            if (key === 8 || key === 46) {
+            if (key === 46) {
                 if (currentBbox !== null) {
                     bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1)
                     currentBbox = null
+
+                    document.body.style.cursor = "default"
                 }
 
                 event.preventDefault()
@@ -853,6 +881,11 @@
                     }
 
                     imageList.options[imageListIndex].selected = true
+                    imageList.selectedIndex = imageListIndex
+
+                    if (resetCanvasOnChange === true) {
+                        resetCanvasPlacement()
+                    }
 
                     setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
 
@@ -873,6 +906,11 @@
                     }
 
                     imageList.options[imageListIndex].selected = true
+                    imageList.selectedIndex = imageListIndex
+
+                    if (resetCanvasOnChange === true) {
+                        resetCanvasPlacement()
+                    }
 
                     setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
 
@@ -893,6 +931,7 @@
                     }
 
                     classList.options[classListIndex].selected = true
+                    classList.selectedIndex = classListIndex
 
                     setCurrentClass()
                 }
@@ -911,11 +950,45 @@
                     }
 
                     classList.options[classListIndex].selected = true
+                    classList.selectedIndex = classListIndex
 
                     setCurrentClass()
                 }
 
                 event.preventDefault()
+            }
+        })
+    }
+
+    const resetCanvasPlacement = () => {
+        scale = defaultScale
+        canvasX = 0
+        canvasY = 0
+        screenX = 0
+        screenY = 0
+
+        mouse.x = 0
+        mouse.y = 0
+        mouse.realX = 0
+        mouse.realY = 0
+        mouse.buttonL = 0
+        mouse.buttonR = 0
+        mouse.startRealX = 0
+        mouse.startRealY = 0
+    }
+
+    const listenImageSearch = () => {
+        document.getElementById("imageSearch").addEventListener("input", (event) => {
+            const value = event.target.value
+
+            for (let imageName in images) {
+                if (imageName.indexOf(value) !== -1) {
+                    document.getElementById("imageList").selectedIndex = images[imageName].index
+
+                    setCurrentImage(images[imageName])
+
+                    break
+                }
             }
         })
     }

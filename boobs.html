@@ -17,6 +17,12 @@
             <form action="">
                 <label for="images">Images:</label>
                 <input type="file" id="images" name="images[]" accept="image/jpeg, image/png" multiple />
+
+                <br />
+
+                <label for="imageSearch">Search:</label>
+                <input type="text" id="imageSearch" name="imageSearch" />
+
                 <label for="imageList"></label><select name="imageList" id="imageList" size="10" multiple></select>
 
                 <hr />
@@ -28,7 +34,7 @@
                 <hr />
 
                 <label for="bboxes">Bboxes:</label>
-                <input type="file" id="bboxes" name="bboxes" accept="application/zip" disabled />
+                <input type="file" id="bboxes" name="bboxes" accept="text/plain, application/zip" disabled multiple />
                 <input type="button" name="restoreBboxes" id="restoreBboxes" value="Restore" disabled />
                 <input type="button" name="saveBboxes" id="saveBboxes" value="Save" />
 
@@ -50,7 +56,7 @@
                             Arrows Up and DOWN - cycle classes
                         </li>
                         <li>
-                            Keys BACKSPACE and DELETE - remove selected Bbox
+                            Key DELETE - remove selected Bbox
                         </li>
                     </ul>
 
