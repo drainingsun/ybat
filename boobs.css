@@ -43,7 +43,7 @@ body {
     margin-bottom: 10px;
 }
 
-#saveClasses, #saveBboxes, #restoreBboxes {
+#saveClasses, #saveBboxes, #restoreBboxes, #cropImages {
     float: right;
     margin-left: 10px;
     margin-top: 10px;

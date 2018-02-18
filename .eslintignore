@@ -1,4 +1,5 @@
 .idea/
 canvas.min.js
 jszip.min.js
+filesaver.min.js
 node_modules/

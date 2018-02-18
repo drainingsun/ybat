@@ -5,7 +5,8 @@
     },
     "globals": {
         "Canvas": true,
-        "JSZip": true
+        "JSZip": true,
+        "saveAs": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {

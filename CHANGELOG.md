@@ -1,3 +1,15 @@
+# 2018-02-18, v0.1.3
+MAJOR:
+* Added ability to crop and saves images from bboxes (experimental).
+* Added FileSaver to better handle file downloading.
+* Fixed issue where MacBook DELETE key wouldn't work.
+
+MINOR:
+* Renamed labels.zip to bboxes.zip.
+* Updated screenshot to reflect changes.
+* Fixed previous version CHANGELOG typo.
+* Added version to footer.
+
 # 2018-02-17, v0.1.2
 
 * Fixed CHANGELOG formatting.
@@ -7,8 +19,8 @@
 * Implemented rudimentary image search by name.
 * Added ability to upload unzipped and/or multiple bboxes.
 * Fixed mouse cursor not resetting on bbox delete.
-* Updates README.md and screenshot to reflect changes.
-
+* Updated README.md and screenshot to reflect changes.
+    
 # 2018-02-15, v0.1.1
 
 * Fixed, so that canvas left offset doesn't cause misplacement of bboxes.

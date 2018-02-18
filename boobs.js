@@ -79,6 +79,7 @@
             listenBboxRestore()
             listenKeyboard()
             listenImageSearch()
+            listenImageCrop()
         }
     }
 
@@ -822,23 +823,11 @@
                 zip.file(name.join("."), result.join("\n"))
             }
 
-            zip.generateAsync({type: "base64"})
-                .then((base64) => {
-                    download("labels.zip", "data:application/zip;base64," + base64)
+            zip.generateAsync({type: "blob"})
+                .then((blob) => {
+                    saveAs(blob, "bboxes.zip")
                 })
         })
-    }
-
-    const download = (name, content) => {
-        const element = document.createElement("a")
-
-        element.setAttribute("href", content)
-        element.setAttribute("download", name)
-        element.style.display = "none"
-
-        document.body.appendChild(element)
-        element.click()
-        document.body.removeChild(element)
     }
 
     const listenBboxRestore = () => {
@@ -859,7 +848,7 @@
         document.addEventListener("keydown", (event) => {
             const key = event.keyCode || event.charCode
 
-            if (key === 46) {
+            if (key === 46 || (key === 8 && event.metaKey === true)) {
                 if (currentBbox !== null) {
                     bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1)
                     currentBbox = null
@@ -988,6 +977,72 @@
                     setCurrentImage(images[imageName])
 
                     break
+                }
+            }
+        })
+    }
+
+    const listenImageCrop = () => {
+        document.getElementById("cropImages").addEventListener("click", () => {
+            const zip = new JSZip()
+
+            let x = 0
+
+            for (let imageName in bboxes) {
+                const image = images[imageName]
+
+                for (let className in bboxes[imageName]) {
+                    for (let i = 0; i < bboxes[imageName][className].length; i++) {
+                        x++
+
+                        const bbox = bboxes[imageName][className][i]
+
+                        const reader = new FileReader()
+
+                        reader.addEventListener("load", () => {
+                            const dataUrl = reader.result
+                            const imageObject = new Image()
+
+                            imageObject.addEventListener("load", () => {
+                                const temporaryCanvas = document.createElement("canvas")
+
+                                temporaryCanvas.style.display = "none"
+                                temporaryCanvas.width = bbox.width
+                                temporaryCanvas.height = bbox.height
+
+                                temporaryCanvas.getContext("2d").drawImage(
+                                    imageObject,
+                                    bbox.x,
+                                    bbox.y,
+                                    bbox.width,
+                                    bbox.height,
+                                    0,
+                                    0,
+                                    bbox.width,
+                                    bbox.height
+                                )
+
+                                temporaryCanvas.toBlob((blob) => {
+                                    const imageNameParts = imageName.split(".")
+
+                                    imageNameParts[imageNameParts.length - 2] += `-${className}-${i}`
+
+                                    zip.file(imageNameParts.join("."), blob)
+
+                                    if (--x === 0) {
+                                        zip.generateAsync({type: "blob"})
+                                            .then((blob) => {
+                                                saveAs(blob, "crops.zip")
+                                            })
+                                    }
+                                }, image.type)
+                            })
+
+                            imageObject.src = dataUrl
+                        })
+
+                        reader.readAsDataURL(image.meta)
+                    }
                 }
             }
         })
