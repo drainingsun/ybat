@@ -33,9 +33,11 @@ No idea about IE/Edge.
 * Zooming and panning images for precise bboxing.
 * Fast navigation for quick bboxing.
 * Auto save in memory in case of accidental refreshes and crashes.
+* Ability to crop your bboxes and save the resulting images.
 
 ## CAVEATS
-Loading many and or big images might take a while. This is because tool needs to figure out image dimensions. 
+* Loading many and or big images might take a while. This is because tool needs to figure out image dimensions.  
+* Cropping many items might crash your browser. This and above will be fixed at some point.
 
 ## CONTRIBUTING
 Go nuts! Just don't forget to follow eslint guidelines. Credit will be given where it's due.

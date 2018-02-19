@@ -995,6 +995,10 @@
                     for (let i = 0; i < bboxes[imageName][className].length; i++) {
                         x++
 
+                        if (x === 1) {
+                            document.body.style.cursor = "wait" // Mark as busy
+                        }
+
                         const bbox = bboxes[imageName][className][i]
 
                         const reader = new FileReader()
@@ -1030,12 +1034,14 @@
                                     zip.file(imageNameParts.join("."), blob)
 
                                     if (--x === 0) {
+                                        document.body.style.cursor = "default"
+
                                         zip.generateAsync({type: "blob"})
                                             .then((blob) => {
                                                 saveAs(blob, "crops.zip")
                                             })
                                     }
-                                }, image.type)
+                                }, image.meta.type)
                             })
 
                             imageObject.src = dataUrl

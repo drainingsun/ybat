@@ -1,3 +1,9 @@
+# 2018-02-19, v0.1.4
+* Fixed bbox select form name. Not sure if it caused problems.
+* Made sure cursor is shown as busy upon crop. (Doesn't work properly - this needs a proper "wait" spinner).
+* Fixed crops not working on Linux.
+* Updated README.md.
+
 # 2018-02-18, v0.1.3
 MAJOR:
 * Added ability to crop and saves images from bboxes (experimental).
