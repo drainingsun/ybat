@@ -34,6 +34,7 @@ No idea about IE/Edge.
 * Fast navigation for quick bboxing.
 * Auto save in memory in case of accidental refreshes and crashes.
 * Ability to crop your bboxes and save the resulting images.
+* Information on both image and current bbox.
 
 ## CAVEATS
 * Loading many and or big images might take a while. This is because tool needs to figure out image dimensions.  

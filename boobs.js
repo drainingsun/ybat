@@ -121,6 +121,8 @@
             setBBoxStyles(context, true)
             context.strokeRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
             context.fillRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
+
+            setBboxCoordinates(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
         }
     }
 
@@ -135,6 +137,10 @@
                 setBBoxStyles(context, bbox.marked)
                 context.strokeRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
                 context.fillRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
+
+                if (bbox.marked === true) {
+                    setBboxCoordinates(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
+                }
             })
         }
     }
@@ -147,6 +153,13 @@
             context.strokeStyle = markedBorderColor
             context.fillStyle = markedBackgroundColor
         }
+    }
+
+    const setBboxCoordinates = (x, y, width, height) => {
+        const x2 = x + width
+        const y2 = y + height
+
+        document.getElementById("bboxInformation").innerHTML = `${width}x${height} (${x}, ${y}) (${x2}, ${y2})`
     }
 
     const setFontStyles = (context, marked) => {
@@ -592,6 +605,9 @@
             })
 
             imageObject.src = dataUrl
+
+            document.getElementById("imageInformation")
+                .innerHTML = `${image.width}x${image.height}, ${formatBytes(image.meta.size)}`
         })
 
         reader.readAsDataURL(image.meta)
@@ -602,10 +618,27 @@
         }
     }
 
+    const formatBytes = (bytes, decimals) => {
+        if (bytes === 0) {
+            return "0 Bytes"
+        }
+
+        const k = 1024
+        const dm = decimals || 2
+        const sizes = ["Bytes", "KB", "MB"]
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i]
+    }
+
     const listenImageSelect = () => {
         const imageList = document.getElementById("imageList")
 
         imageList.addEventListener("change", () => {
+            if (resetCanvasOnChange === true) {
+                resetCanvasPlacement()
+            }
+
             imageListIndex = imageList.selectedIndex
 
             setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
@@ -613,12 +646,18 @@
     }
 
     const listenClassLoad = () => {
-        document.getElementById("classes").addEventListener("change", (event) => {
-            resetClassList()
+        const classesElement = document.getElementById("classes")
 
+        classesElement.addEventListener("click", () => {
+            classesElement.value = null
+        })
+
+        classesElement.addEventListener("change", (event) => {
             const files = event.target.files
 
             if (files.length > 0) {
+                resetClassList()
+
                 const nameParts = files[0].name.split(".")
 
                 if (nameParts[nameParts.length - 1] === "txt") {
@@ -694,12 +733,18 @@
     }
 
     const listenBboxLoad = () => {
-        document.getElementById("bboxes").addEventListener("change", (event) => {
-            resetBboxes()
+        const bboxesElement = document.getElementById("bboxes")
 
+        bboxesElement.addEventListener("click", () => {
+            bboxesElement.value = null
+        })
+
+        bboxesElement.addEventListener("change", (event) => {
             const files = event.target.files
 
             if (files.length > 0) {
+                resetBboxes()
+
                 for (let i = 0; i < files.length; i++) {
                     const reader = new FileReader()
 

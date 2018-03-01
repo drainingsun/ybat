@@ -1,3 +1,9 @@
+# 2018-03-01, v0.1.5
+* Fixed canvas not resetting on image mouse select.
+* Fixed classes and bboxes not reloading on selecting the same files.
+* Added image and current bbox information.
+* Updated README.md.
+
 # 2018-02-19, v0.1.4
 * Fixed bbox select form name. Not sure if it caused problems.
 * Made sure cursor is shown as busy upon crop. (Doesn't work properly - this needs a proper "wait" spinner).
