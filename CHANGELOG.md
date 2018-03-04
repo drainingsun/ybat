@@ -1,3 +1,7 @@
+# 2018-03-04, v0.1.6
+* Fixed bbox dimension display being affected by zoom.
+* Added a middle dot in bboxes for easier center approximation.
+
 # 2018-03-01, v0.1.5
 * Fixed canvas not resetting on image mouse select.
 * Fixed classes and bboxes not reloading on selecting the same files.

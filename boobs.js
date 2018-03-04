@@ -122,7 +122,9 @@
             context.strokeRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
             context.fillRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
 
-            setBboxCoordinates(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
+            context.strokeRect(zoomX(mouse.startRealX + width / 2), zoomY(mouse.startRealY + height / 2), 1, 1)
+
+            setBboxCoordinates(mouse.startRealX, mouse.startRealY, width, height)
         }
     }
 
@@ -138,8 +140,10 @@
                 context.strokeRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
                 context.fillRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
 
+                context.strokeRect(zoomX(bbox.x + bbox.width / 2), zoomY(bbox.y + bbox.height / 2), 1, 1)
+
                 if (bbox.marked === true) {
-                    setBboxCoordinates(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
+                    setBboxCoordinates(bbox.x, bbox.y, bbox.width, bbox.height)
                 }
             })
         }
