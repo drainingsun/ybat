@@ -19,6 +19,8 @@
     const edgeSize = 5 // Pixels
     const resetCanvasOnChange = true // Or false
     const defaultScale = 0.5 // Default zoom level
+    const drawCenterX = true // Or false
+    const drawGuidelines = true // Or false
 
     // Main containers
     let canvas = null
@@ -91,6 +93,7 @@
                 drawImage(context)
                 drawNewBbox(context)
                 drawExistingBboxes(context)
+                drawCross(context)
             } else {
                 drawIntro(context)
             }
@@ -122,7 +125,7 @@
             context.strokeRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
             context.fillRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
 
-            context.strokeRect(zoomX(mouse.startRealX + width / 2), zoomY(mouse.startRealY + height / 2), 1, 1)
+            drawX(context, mouse.startRealX, mouse.startRealY, width, height)
 
             setBboxCoordinates(mouse.startRealX, mouse.startRealY, width, height)
         }
@@ -140,7 +143,7 @@
                 context.strokeRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
                 context.fillRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
 
-                context.strokeRect(zoomX(bbox.x + bbox.width / 2), zoomY(bbox.y + bbox.height / 2), 1, 1)
+                drawX(context, bbox.x, bbox.y, bbox.width, bbox.height)
 
                 if (bbox.marked === true) {
                     setBboxCoordinates(bbox.x, bbox.y, bbox.width, bbox.height)
@@ -149,7 +152,42 @@
         }
     }
 
+    const drawX = (context, x, y, width, height) => {
+        if (drawCenterX === true) {
+            const centerX = x + width / 2
+            const centerY = y + height / 2
+
+            context.beginPath()
+            context.moveTo(zoomX(centerX), zoomY(centerY - 10))
+            context.lineTo(zoomX(centerX), zoomY(centerY + 10))
+            context.stroke()
+
+            context.beginPath()
+            context.moveTo(zoomX(centerX - 10), zoomY(centerY))
+            context.lineTo(zoomX(centerX + 10), zoomY(centerY))
+            context.stroke()
+        }
+    }
+
+    const drawCross = (context) => {
+        if (drawGuidelines === true) {
+            context.setLineDash([5])
+
+            context.beginPath()
+            context.moveTo(zoomX(mouse.realX), zoomY(0))
+            context.lineTo(zoomX(mouse.realX), zoomY(currentImage.height))
+            context.stroke()
+
+            context.beginPath()
+            context.moveTo(zoomX(0), zoomY(mouse.realY))
+            context.lineTo(zoomX(currentImage.width), zoomY(mouse.realY))
+            context.stroke()
+        }
+    }
+
     const setBBoxStyles = (context, marked) => {
+        context.setLineDash([])
+
         if (marked === false) {
             context.strokeStyle = borderColor
             context.fillStyle = backgroundColor

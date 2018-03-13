@@ -1,3 +1,8 @@
+# 2018-03-13, v0.1.7
+* Changed middle dot to a cross sign. Also made it configurable.
+* Added guidelines for cursor. Configurable.
+* Updated README.md.
+
 # 2018-03-04, v0.1.6
 * Fixed bbox dimension display being affected by zoom.
 * Added a middle dot in bboxes for easier center approximation.

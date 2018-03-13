@@ -30,7 +30,7 @@ No idea about IE/Edge.
 * Works in your browser on any platform.
 * Complete YOLO format support.
 * No need for image upload - everything is done locally!
-* Zooming and panning images for precise bboxing.
+* Zooming and panning images with guidelines for precise bboxing.
 * Fast navigation for quick bboxing.
 * Auto save in memory in case of accidental refreshes and crashes.
 * Ability to crop your bboxes and save the resulting images.
