@@ -3,24 +3,25 @@
     "use strict"
 
     // Parameters
-    const saveInterval = 60 // Seconds
-    const fontBaseSize = 30 // Pixels
-    const fontColor = "#001f3f"
-    const borderColor = "#001f3f"
-    const backgroundColor = "rgba(0, 116, 217, 0.2)"
-    const markedFontColor = "#FF4136"
-    const markedBorderColor = "#FF4136"
-    const markedBackgroundColor = "rgba(255, 133, 27, 0.2)"
-    const minBBoxWidth = 5 // Pixels
-    const minBBoxHeight = 5 // Pixels
-    const scrollSpeed = 1.1 // Multiplying factor
-    const minZoom = 0.1 // Min size of original
-    const maxZoom = 5 // Max size of original
-    const edgeSize = 5 // Pixels
-    const resetCanvasOnChange = true // Or false
-    const defaultScale = 0.5 // Default zoom level
-    const drawCenterX = true // Or false
-    const drawGuidelines = true // Or false
+    const saveInterval = 60 // Bbox recovery save in seconds
+    const fontBaseSize = 30 // Text size in pixels
+    const fontColor = "#001f3f" // Base font color
+    const borderColor = "#001f3f" // Base bbox border color
+    const backgroundColor = "rgba(0, 116, 217, 0.2)" // Base bbox fill color
+    const markedFontColor = "#FF4136" // Marked bbox font color
+    const markedBorderColor = "#FF4136" // Marked bbox border color
+    const markedBackgroundColor = "rgba(255, 133, 27, 0.2)" // Marked bbox fill color
+    const minBBoxWidth = 5 // Minimal width of bbox
+    const minBBoxHeight = 5 // Minimal height of bbox
+    const scrollSpeed = 1.1 // Multiplying factor of wheel speed
+    const minZoom = 0.1 // Smallest zoom allowed
+    const maxZoom = 5 // Largest zoom allowed
+    const edgeSize = 5 // Resize activation area in pixels
+    const resetCanvasOnChange = true // Whether to return to default position and zoom on image change
+    const defaultScale = 0.5 // Default zoom level for images. Can be overridden with fittedZoom
+    const drawCenterX = true // Whether to draw a cross in the middle of bbox
+    const drawGuidelines = true // Whether to draw guidelines for cursor
+    const fittedZoom = true // Whether to fit image in the screen by it's largest dimension. Overrides defaultScale
 
     // Main containers
     let canvas = null
@@ -554,13 +555,13 @@
 
     const listenImageLoad = () => {
         document.getElementById("images").addEventListener("change", (event) => {
-            resetImageList()
-
             const imageList = document.getElementById("imageList")
 
             const files = event.target.files
 
             if (files.length > 0) {
+                resetImageList()
+
                 document.body.style.cursor = "wait"
 
                 for (let i = 0; i < files.length; i++) {
@@ -631,6 +632,14 @@
     }
 
     const setCurrentImage = (image) => {
+        if (resetCanvasOnChange === true) {
+            resetCanvasPlacement()
+        }
+
+        if (fittedZoom === true) {
+            fitZoom(image)
+        }
+
         const reader = new FileReader()
 
         reader.addEventListener("load", () => {
@@ -660,6 +669,14 @@
         }
     }
 
+    const fitZoom = (image) => {
+        if (image.width > image.height) {
+            scale = canvas.width / image.width
+        } else {
+            scale = canvas.height / image.height
+        }
+    }
+
     const formatBytes = (bytes, decimals) => {
         if (bytes === 0) {
             return "0 Bytes"
@@ -677,10 +694,6 @@
         const imageList = document.getElementById("imageList")
 
         imageList.addEventListener("change", () => {
-            if (resetCanvasOnChange === true) {
-                resetCanvasPlacement()
-            }
-
             imageListIndex = imageList.selectedIndex
 
             setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
@@ -959,10 +972,6 @@
                     imageList.options[imageListIndex].selected = true
                     imageList.selectedIndex = imageListIndex
 
-                    if (resetCanvasOnChange === true) {
-                        resetCanvasPlacement()
-                    }
-
                     setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
 
                     document.body.style.cursor = "default"
@@ -983,10 +992,6 @@
 
                     imageList.options[imageListIndex].selected = true
                     imageList.selectedIndex = imageListIndex
-
-                    if (resetCanvasOnChange === true) {
-                        resetCanvasPlacement()
-                    }
 
                     setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
 

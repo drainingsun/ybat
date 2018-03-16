@@ -1,3 +1,9 @@
+# 2018-03-16, v0.1.8
+* Some minor refactoring.
+* Added ability to fit image into screen. Configurable.
+* Fixed bug with images resetting upon not selecting anything from file window.
+* Added detailed explanations on the configurable parameters.
+
 # 2018-03-13, v0.1.7
 * Changed middle dot to a cross sign. Also made it configurable.
 * Added guidelines for cursor. Configurable.
