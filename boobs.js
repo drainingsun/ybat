@@ -721,7 +721,7 @@
                     reader.addEventListener("load", () => {
                         const lines = reader.result
 
-                        const rows = lines.split("\n")
+                        const rows = lines.split("\r\n")
 
                         if (rows.length > 0) {
                             const classList = document.getElementById("classList")
