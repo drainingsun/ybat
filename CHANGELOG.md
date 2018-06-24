@@ -1,3 +1,6 @@
+# 2018-06-24, v0.1.9
+* Fixed issue with newlines in classes for different OS.
+
 # 2018-03-16, v0.1.8
 * Some minor refactoring.
 * Added ability to fit image into screen. Configurable.

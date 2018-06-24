@@ -721,12 +721,14 @@
                     reader.addEventListener("load", () => {
                         const lines = reader.result
 
-                        const rows = lines.split("\n")
+                        const rows = lines.split(/[\r\n]+/)
 
                         if (rows.length > 0) {
                             const classList = document.getElementById("classList")
 
                             for (let i = 0; i < rows.length; i++) {
+                                rows[i] = rows[i].trim()
+
                                 if (rows[i] !== "") {
                                     classes[rows[i]] = i
 
@@ -858,7 +860,7 @@
         }
 
         if (bbox) {
-            const rows = text.split("\n")
+            const rows = text.split(/[\r\n]+/)
 
             for (let i = 0; i < rows.length; i++) {
                 const cols = rows[i].split(" ")
