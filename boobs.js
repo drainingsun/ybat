@@ -29,7 +29,7 @@
     let classes = {}
     let bboxes = {}
 
-    const extensions = ["jpg", "jpeg", "png"]
+    const extensions = ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"]
 
     let currentImage = null
     let currentClass = null
@@ -79,6 +79,8 @@
             listenClassSelect()
             listenBboxLoad()
             listenBboxSave()
+            listenBboxVocSave()
+            listenBboxCocoSave()
             listenBboxRestore()
             listenKeyboard()
             listenImageSearch()
@@ -110,7 +112,7 @@
         context.fillText("USAGE:", zoomX(20), zoomY(50))
         context.fillText("1. Load your images (jpg, png). Might be slow if many or big.", zoomX(20), zoomY(100))
         context.fillText("2. Load your classes (yolo *.names format).", zoomX(20), zoomY(150))
-        context.fillText("3. Load or restore, if any, bboxes (zipped yolo *.txt files).", zoomX(20), zoomY(200))
+        context.fillText("3. Load or restore, if any, bboxes (zipped yolo/voc/coco files).", zoomX(20), zoomY(200))
         context.fillText("NOTES:", zoomX(20), zoomY(300))
         context.fillText("1: Images and classes must be loaded before bbox load.", zoomX(20), zoomY(350))
         context.fillText("2: Reloading images will RESET BBOXES!", zoomX(20), zoomY(400))
@@ -805,10 +807,10 @@
                 for (let i = 0; i < files.length; i++) {
                     const reader = new FileReader()
 
-                    const nameParts = files[i].name.split(".")
+                    const extension = files[i].name.split(".").pop()
 
                     reader.addEventListener("load", () => {
-                        if (nameParts[nameParts.length - 1] === "txt") {
+                        if (extension === "txt" || extension === "xml" || extension === "json") {
                             storeBbox(files[i].name, reader.result)
                         } else {
                             const zip = new JSZip()
@@ -825,7 +827,7 @@
                         }
                     })
 
-                    if (nameParts[nameParts.length - 1] === "txt") {
+                    if (extension === "txt" || extension === "xml"  || extension === "json") {
                         reader.readAsText(files[i])
                     } else {
                         reader.readAsArrayBuffer(event.target.files[i])
@@ -843,47 +845,141 @@
         let image = null
         let bbox = null
 
-        for (let i = 0; i < extensions.length; i++) {
-            const imageName = filename.replace(".txt", `.${extensions[i]}`)
+        const extension = filename.split(".").pop()
 
-            if (typeof images[imageName] !== "undefined") {
-                image = images[imageName]
+        if (extension === "txt" || extension === "xml") {
+            for (let i = 0; i < extensions.length; i++) {
+                const imageName = filename.replace(`.${extension}`, `.${extensions[i]}`)
 
-                if (typeof bboxes[imageName] === "undefined") {
-                    bboxes[imageName] = {}
+                if (typeof images[imageName] !== "undefined") {
+                    image = images[imageName]
+
+                    if (typeof bboxes[imageName] === "undefined") {
+                        bboxes[imageName] = {}
+                    }
+
+                    bbox = bboxes[imageName]
+
+                    if (extension === "txt") {
+                        const rows = text.split(/[\r\n]+/)
+
+                        for (let i = 0; i < rows.length; i++) {
+                            const cols = rows[i].split(" ")
+
+                            cols[0] = parseInt(cols[0])
+
+                            for (let className in classes) {
+                                if (classes[className] === cols[0]) {
+                                    if (typeof bbox[className] === "undefined") {
+                                        bbox[className] = []
+                                    }
+
+                                    // Reverse engineer actual position and dimensions from yolo format
+                                    const width = Math.floor(cols[3] * image.width)
+                                    const x = Math.floor(cols[1] * image.width - width * 0.5)
+                                    const height = Math.floor(cols[4] * image.height)
+                                    const y = Math.floor(cols[2] * image.height - height * 0.5)
+
+                                    bbox[className].push({
+                                        x: x,
+                                        y: y,
+                                        width: width,
+                                        height: height,
+                                        marked: false,
+                                        class: className
+                                    })
+
+                                    break
+                                }
+                            }
+                        }
+                    } else if (extension === "xml") {
+                        const parser = new DOMParser()
+                        const xmlDoc = parser.parseFromString(text, "text/xml")
+
+                        const objects = xmlDoc.getElementsByTagName("object")
+
+                        for (let i = 0; i < objects.length; i++) {
+                            const objectName = objects[i].getElementsByTagName("name")[0].childNodes[0].nodeValue
+
+                            for (let className in classes) {
+                                if (className === objectName) {
+                                    if (typeof bbox[className] === "undefined") {
+                                        bbox[className] = []
+                                    }
+
+                                    const bndBox = objects[i].getElementsByTagName("bndbox")[0]
+
+                                    const bndBoxX = bndBox.getElementsByTagName("xmin")[0].childNodes[0].nodeValue
+                                    const bndBoxY = bndBox.getElementsByTagName("ymin")[0].childNodes[0].nodeValue
+                                    const bndBoxMaxX = bndBox.getElementsByTagName("xmax")[0].childNodes[0].nodeValue
+                                    const bndBoxMaxY = bndBox.getElementsByTagName("ymax")[0].childNodes[0].nodeValue
+
+                                    bbox[className].push({
+                                        x: parseInt(bndBoxX),
+                                        y: parseInt(bndBoxY),
+                                        width: parseInt(bndBoxMaxX) - parseInt(bndBoxX),
+                                        height: parseInt(bndBoxMaxY) - parseInt(bndBoxY),
+                                        marked: false,
+                                        class: className
+                                    })
+
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            const json = JSON.parse(text)
+
+            for (let i = 0; i < json.annotations.length; i++) {
+                let imageName = null
+                let categoryName = null
+
+                for (let j = 0; j < json.images.length; j++) {
+                    if (json.annotations[i].image_id === json.images[j].id) {
+                        imageName = json.images[j].file_name
+
+                        if (typeof images[imageName] !== "undefined") {
+                            image = images[imageName]
+
+                            if (typeof bboxes[imageName] === "undefined") {
+                                bboxes[imageName] = {}
+                            }
+
+                            bbox = bboxes[imageName]
+
+                            break
+                        }
+                    }
                 }
 
-                bbox = bboxes[imageName]
+                for (let j = 0; j < json.categories.length; j++) {
+                    if (json.annotations[i].category_id === json.categories[j].id) {
+                        categoryName = json.categories[j].name
 
-                break
-            }
-        }
-
-        if (bbox) {
-            const rows = text.split(/[\r\n]+/)
-
-            for (let i = 0; i < rows.length; i++) {
-                const cols = rows[i].split(" ")
-
-                cols[0] = parseInt(cols[0])
+                        break
+                    }
+                }
 
                 for (let className in classes) {
-                    if (classes[className] === cols[0]) {
+                    if (className === categoryName) {
                         if (typeof bbox[className] === "undefined") {
                             bbox[className] = []
                         }
 
-                        // Reverse engineer actual position and dimensions from yolo format
-                        const width = Math.floor(cols[3] * image.width)
-                        const x = Math.floor(cols[1] * image.width - width * 0.5)
-                        const height = Math.floor(cols[4] * image.height)
-                        const y = Math.floor(cols[2] * image.height - height * 0.5)
+                        const bboxX = json.annotations[i].bbox[0]
+                        const bboxY = json.annotations[i].bbox[1]
+                        const bboxWidth = json.annotations[i].bbox[2]
+                        const bboxHeight = json.annotations[i].bbox[3]
 
                         bbox[className].push({
-                            x: x,
-                            y: y,
-                            width: width,
-                            height: height,
+                            x: bboxX,
+                            y: bboxY,
+                            width: bboxWidth,
+                            height: bboxHeight,
                             marked: false,
                             class: className
                         })
@@ -927,14 +1023,146 @@
 
             zip.generateAsync({type: "blob"})
                 .then((blob) => {
-                    saveAs(blob, "bboxes.zip")
+                    saveAs(blob, "bboxes_yolo.zip")
+                })
+        })
+    }
+
+    const listenBboxVocSave = () => {
+        document.getElementById("saveVocBboxes").addEventListener("click", () => {
+            const folderPath = document.getElementById("vocFolder").value
+
+            const zip = new JSZip()
+
+            for (let imageName in bboxes) {
+                const image = images[imageName]
+
+                const name = imageName.split(".")
+
+                name[name.length - 1] = "xml"
+
+                const result = [
+                    "<?xml version=\"1.0\"?>",
+                    "<annotation>",
+                    `<folder>${folderPath}</folder>`,
+                    `<filename>${imageName}</filename>`,
+                    "<path/>",
+                    "<source>",
+                    "<database>Unknown</database>",
+                    "</source>",
+                    "<size>",
+                    `<width>${image.width}</width>`,
+                    `<height>${image.height}</height>`,
+                    "<depth>3</depth>",
+                    "</size>",
+                    "<segmented>0</segmented>"
+                ]
+
+                for (let className in bboxes[imageName]) {
+                    result.push("<object>")
+                    result.push(`<name>${className}</name>`)
+                    result.push("<pose>Unspecified</pose>")
+                    result.push("<truncated>0</truncated>")
+                    result.push("<occluded>0</occluded>")
+                    result.push("<difficult>0</difficult>")
+
+                    for (let i = 0; i < bboxes[imageName][className].length; i++) {
+                        const bbox = bboxes[imageName][className][i]
+
+                        result.push("<bndbox>")
+                        result.push(`<xmin>${bbox.x}</xmin>`)
+                        result.push(`<ymin>${bbox.y}</ymin>`)
+                        result.push(`<xmax>${bbox.x + bbox.width}</xmax>`)
+                        result.push(`<ymax>${bbox.y + bbox.height}</ymax>`)
+                        result.push("</bndbox>")
+                    }
+
+                    result.push("</object>")
+                }
+
+                result.push("</annotation>")
+
+                if (result.length > 15) {
+                    zip.file(name.join("."), result.join("\n"))
+                }
+            }
+
+            zip.generateAsync({type: "blob"})
+                .then((blob) => {
+                    saveAs(blob, "bboxes_voc.zip")
+                })
+        })
+    }
+
+    const listenBboxCocoSave = () => {
+        document.getElementById("saveCocoBboxes").addEventListener("click", () => {
+            const zip = new JSZip()
+
+            const result = {
+                images: [],
+                type: "instances",
+                annotations: [],
+                categories: []
+            }
+
+            for (let className in classes) {
+                result.categories.push({
+                    supercategory: "none",
+                    id: classes[className] + 1,
+                    name: className
+                })
+            }
+
+            for (let imageName in images) {
+                result.images.push({
+                    id: images[imageName].index + 1,
+                    file_name: imageName, //eslint-disable-line camelcase
+                    width: images[imageName].width,
+                    height: images[imageName].height
+                })
+            }
+
+            let id = 0
+
+            for (let imageName in bboxes) {
+                const image = images[imageName]
+
+                for (let className in bboxes[imageName]) {
+                    for (let i = 0; i < bboxes[imageName][className].length; i++) {
+                        const bbox = bboxes[imageName][className][i]
+
+                        const segmentation = [
+                            bbox.x, bbox.y,
+                            bbox.x, bbox.y + bbox.height,
+                            bbox.x + bbox.width, bbox.y + bbox.height,
+                            bbox.x + bbox.width, bbox.y
+                        ]
+
+                        result.annotations.push({
+                            segmentation: segmentation,
+                            area: bbox.width * bbox.height,
+                            iscrowd: 0,
+                            ignore: 0,
+                            image_id: image.index + 1, //eslint-disable-line camelcase
+                            bbox: [bbox.x, bbox.y, bbox.width, bbox.height],
+                            category_id: classes[className] + 1, //eslint-disable-line camelcase
+                            id: ++id
+                        })
+                    }
+                }
+
+                zip.file("coco.json", JSON.stringify(result))
+            }
+
+            zip.generateAsync({type: "blob"})
+                .then((blob) => {
+                    saveAs(blob, "bboxes_coco.zip")
                 })
         })
     }
 
     const listenBboxRestore = () => {
         document.getElementById("restoreBboxes").addEventListener("click", () => {
-
             const item = localStorage.getItem("bboxes")
 
             if (item) {

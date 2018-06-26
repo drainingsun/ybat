@@ -18,7 +18,7 @@
             <form action="">
                 <label for="images">Images:</label>
                 <input type="file" id="images" name="images[]" accept="image/jpeg, image/png" multiple />
-                <input type="button" name="cropImages" id="cropImages" value="Crop" />
+                <input type="button" name="cropImages" id="cropImages" value="Crop&Save" />
 
                 <br />
 
@@ -40,12 +40,21 @@
                 <label for="bboxes">Bboxes:</label>
                 <input type="file" id="bboxes" name="bboxes[]" accept="text/plain, application/zip" disabled multiple />
                 <input type="button" name="restoreBboxes" id="restoreBboxes" value="Restore" disabled />
-                <input type="button" name="saveBboxes" id="saveBboxes" value="Save" />
+                <input type="button" name="saveBboxes" id="saveBboxes" value="Save YOLO" />
 
+                <div id="voc">
+                    <label for="vocFolder">Voc folder:</label>
+                    <input type="text" id="vocFolder" name="vocFolder" value="data" />
+                    <input type="button" name="saveVocBboxes" id="saveVocBboxes" value="Save VOC" />
+                    <input type="button" name="saveCocoBboxes" id="saveCocoBboxes" value="Save COCO" />
+                </div>
+                <div id="coco">
+
+                </div>
                 <hr />
 
                 <div id="description">
-                    NAVIGATION:
+                    SHORTCUTS:
                     <ul>
                         <li>
                             Mouse WHEEL - zoom in/out image
@@ -64,7 +73,7 @@
                         </li>
                     </ul>
 
-                    <p>Version: 0.1.9 |  Copyright © 2018 Draining Sun.</p>
+                    <p>Version: 0.2.0 |  Copyright © 2018 Draining Sun.</p>
                 </div>
             </form>
         </div>

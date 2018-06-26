@@ -1,5 +1,5 @@
 # Boobs - YOLO BBox Annotation Tool
-Fast and efficient BBox annotation for your images in YOLO format.
+Fast and efficient BBox annotation for your images in YOLO, and now, VOC/COCO formats!
 
 ## INTRO
 To see why and for what this was created, please read [Boobs - YOLO BBox Annotation Tool](https://medium.com/@drainingsun/boobs-yolo-bbox-annotation-tool-96fb765d0036)
@@ -27,6 +27,7 @@ All browsers that support ES6 should work. Tested with:
 No idea about IE/Edge.
 
 ## FEATURES
+* **NEW! Basic Pascal VOC and COCO format support.**
 * Works in your browser on any platform.
 * Complete YOLO format support.
 * No need for image upload - everything is done locally!

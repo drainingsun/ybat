@@ -1,3 +1,8 @@
+# 2018-06-26, v0.2.0
+* **NEW! Basic Pascal VOC and COCO format support. EXPERIMENTAL!**
+* Some text clarifications.
+* Fixed a bug with uppercase extension names on images not working.
+
 # 2018-06-24, v0.1.9
 * Fixed issue with newlines in classes for different OS.
 

@@ -1,6 +1,15 @@
 body {
     overflow: hidden;
 }
+
+form {
+    height: 100%
+}
+
+hr {
+    width: 100%;
+}
+
 .container {
     display: block;
     position: absolute;
@@ -33,27 +42,46 @@ body {
 }
 
 #images, #classes, #bboxes {
-    width: 170px;
+    width: 175px;
     margin-top: 10px;
+}
+
+#bboxes {
+    width: 130px;
 }
 
 #imageList, #classList, #description {
     width: 100%;
     margin-top: 10px;
     margin-bottom: 10px;
+    height: 18%;
 }
 
-#saveClasses, #saveBboxes, #restoreBboxes, #cropImages {
+#saveClasses, #saveBboxes, #saveVocBboxes, #saveCocoBboxes, #restoreBboxes, #cropImages {
     float: right;
     margin-left: 10px;
     margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 #imageSearch {
-    margin-top: 10px
+    margin-top: 10px;
 }
 
 #imageInformation, #bboxInformation {
     height: 20px;
     width: 100%;
+}
+
+#voc {
+    margin-top: 10px;
+}
+
+#vocFolder {
+    width: 95px;
+}
+
+#saveVocBboxes, #saveCocoBboxes {
+    margin-top: 0;
+    margin-bottom: 0;
 }
