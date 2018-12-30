@@ -61,12 +61,29 @@
         e.preventDefault()
     }, false)
 
-    // Save bboxes to local storage every X seconds
-    setInterval(() => {
-        if (Object.keys(bboxes).length > 0) {
-            localStorage.setItem("bboxes", JSON.stringify(bboxes))
+    const isSupported = (storage)  => {
+        try {
+            const key = "__some_random_key_1234%(*^()^)___"
+
+            storage.setItem(key, key)
+            storage.removeItem(key)
+
+            return true
+        } catch (e) {
+            return false
         }
-    }, saveInterval * 1000)
+    }
+
+    // Save bboxes to local storage every X seconds
+    if (isSupported() === true) {
+        setInterval(() => {
+            if (Object.keys(bboxes).length > 0) {
+                localStorage.setItem("bboxes", JSON.stringify(bboxes))
+            }
+        }, saveInterval * 1000)
+    } else {
+        alert("Restore function is not supported. If you need it, use Chrome or Firefox instead.")
+    }
 
     // Start everything
     document.onreadystatechange = () => {
