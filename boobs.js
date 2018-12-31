@@ -61,12 +61,12 @@
         e.preventDefault()
     }, false)
 
-    const isSupported = (storage)  => {
+    const isSupported = ()  => {
         try {
             const key = "__some_random_key_1234%(*^()^)___"
 
-            storage.setItem(key, key)
-            storage.removeItem(key)
+            localStorage.setItem(key, key)
+            localStorage.removeItem(key)
 
             return true
         } catch (e) {

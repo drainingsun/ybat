@@ -1,3 +1,10 @@
+# 2018-12-31, v0.2.2
+* Fixed a warning if Recovery is not supported.
+* Added missing changelog from last time :)
+
+# 2018-12-30, v0.2.1
+* Added a warning if Recovery is not supported.
+
 # 2018-06-26, v0.2.0
 * **NEW! Basic Pascal VOC and COCO format support. EXPERIMENTAL!**
 * Some text clarifications.
