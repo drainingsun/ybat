@@ -1,3 +1,6 @@
+# 2018-12-31, v0.2.3
+* Fixed a potential bbox shift when loading bboxes from file.
+
 # 2018-12-31, v0.2.2
 * Fixed a warning if Recovery is not supported.
 * Added missing changelog from last time :)

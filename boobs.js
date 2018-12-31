@@ -892,16 +892,16 @@
                                     }
 
                                     // Reverse engineer actual position and dimensions from yolo format
-                                    const width = Math.floor(cols[3] * image.width)
-                                    const x = Math.floor(cols[1] * image.width - width * 0.5)
-                                    const height = Math.floor(cols[4] * image.height)
-                                    const y = Math.floor(cols[2] * image.height - height * 0.5)
+                                    const width = cols[3] * image.width
+                                    const x = cols[1] * image.width - width * 0.5
+                                    const height = cols[4] * image.height
+                                    const y = cols[2] * image.height - height * 0.5
 
                                     bbox[className].push({
-                                        x: x,
-                                        y: y,
-                                        width: width,
-                                        height: height,
+                                        x: Math.floor(x),
+                                        y: Math.floor(y),
+                                        width: Math.floor(width),
+                                        height: Math.floor(height),
                                         marked: false,
                                         class: className
                                     })
