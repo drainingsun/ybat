@@ -1,3 +1,7 @@
+# 2019-04-08, v0.2.4
+* Fixed VOC format not exporting objects correctly.
+* Updated copyrights.
+
 # 2018-12-31, v0.2.3
 * Fixed a potential bbox shift when loading bboxes from file.
 

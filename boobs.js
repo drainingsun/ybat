@@ -1076,15 +1076,15 @@
                 ]
 
                 for (let className in bboxes[imageName]) {
-                    result.push("<object>")
-                    result.push(`<name>${className}</name>`)
-                    result.push("<pose>Unspecified</pose>")
-                    result.push("<truncated>0</truncated>")
-                    result.push("<occluded>0</occluded>")
-                    result.push("<difficult>0</difficult>")
-
                     for (let i = 0; i < bboxes[imageName][className].length; i++) {
                         const bbox = bboxes[imageName][className][i]
+
+                        result.push("<object>")
+                        result.push(`<name>${className}</name>`)
+                        result.push("<pose>Unspecified</pose>")
+                        result.push("<truncated>0</truncated>")
+                        result.push("<occluded>0</occluded>")
+                        result.push("<difficult>0</difficult>")
 
                         result.push("<bndbox>")
                         result.push(`<xmin>${bbox.x}</xmin>`)
@@ -1092,9 +1092,9 @@
                         result.push(`<xmax>${bbox.x + bbox.width}</xmax>`)
                         result.push(`<ymax>${bbox.y + bbox.height}</ymax>`)
                         result.push("</bndbox>")
-                    }
 
-                    result.push("</object>")
+                        result.push("</object>")
+                    }
                 }
 
                 result.push("</annotation>")
