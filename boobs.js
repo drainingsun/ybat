@@ -734,7 +734,7 @@
 
                 const nameParts = files[0].name.split(".")
 
-                if (nameParts[nameParts.length - 1] === "txt") {
+                if (nameParts[nameParts.length - 1] === "names") {
                     const reader = new FileReader()
 
                     reader.addEventListener("load", () => {
