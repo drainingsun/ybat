@@ -1,3 +1,7 @@
+# 2019-12-02, v0.2.5
+Renamed project to make it more fit for professional environment.
+Replaced sample image.
+
 # 2019-04-08, v0.2.4
 * Fixed VOC format not exporting objects correctly.
 * Updated copyrights.
