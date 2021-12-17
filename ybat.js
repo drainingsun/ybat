@@ -1148,12 +1148,12 @@
                     for (let i = 0; i < bboxes[imageName][className].length; i++) {
                         const bbox = bboxes[imageName][className][i]
 
-                        const segmentation = [
+                        const segmentation = [[
                             bbox.x, bbox.y,
                             bbox.x, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y
-                        ]
+                        ]]
 
                         result.annotations.push({
                             segmentation: segmentation,
