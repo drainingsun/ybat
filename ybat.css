@@ -11,9 +11,10 @@ hr {
 }
 
 .container {
-    display: block;
+    display: flex;
+    align-items: flex-start;
     position: absolute;
-    height: auto;
+    padding: 1rem 0;
     bottom: 0;
     top: 0;
     left: 0;
@@ -36,8 +37,18 @@ hr {
 }
 
 .right {
+    width: calc(40% - 10px);
     border-left: 1px solid gray;
-    margin: 10px 10px 10px calc(30% + 10px);
+    display: block;
+    margin: 10px 0 10px calc(30% + 10px);
+    padding-left: 10px;
+}
+
+.rightBboxes {
+    width: calc(30% - 10px);
+    border-left: 1px solid gray;
+    display: block;
+    margin: 10px 0 10px 10px;
     padding-left: 10px;
 }
 
@@ -50,7 +61,7 @@ hr {
     width: 130px;
 }
 
-#imageList, #classList, #description {
+#imageList, #classList, #description, #currentBboxesList {
     width: 100%;
     margin-top: 10px;
     margin-bottom: 10px;

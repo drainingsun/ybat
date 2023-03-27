@@ -5,6 +5,9 @@
     // Parameters
     const saveInterval = 60 // Bbox recovery save in seconds
     const fontBaseSize = 30 // Text size in pixels
+
+    // For internal use
+    
     const fontColor = "#001f3f" // Base font color
     const borderColor = "#001f3f" // Base bbox border color
     const backgroundColor = "rgba(0, 116, 217, 0.2)" // Base bbox fill color
@@ -34,6 +37,7 @@
     let currentImage = null
     let currentClass = null
     let currentBbox = null
+    let currentBboxes = null
     let imageListIndex = 0
     let classListIndex = 0
 
@@ -43,6 +47,9 @@
     let canvasY = 0
     let screenX = 0
     let screenY = 0
+
+    // Lock/Unlock Bboxes
+    let lockBboxes = true
 
     // Mouse container
     const mouse = {
@@ -85,6 +92,11 @@
         alert("Restore function is not supported. If you need it, use Chrome or Firefox instead.")
     }
 
+    // Prevent accidental reloading
+    window.onbeforeunload = function(){
+        return 'Are you sure you want to leave the page?';
+    };
+
     // Start everything
     document.onreadystatechange = () => {
         if (document.readyState === "complete") {
@@ -94,11 +106,13 @@
             listenImageSelect()
             listenClassLoad()
             listenClassSelect()
+            listenBboxesSelect()
             listenBboxLoad()
             listenBboxSave()
             listenBboxVocSave()
             listenBboxCocoSave()
             listenBboxRestore()
+            listenLockBboxes()
             listenKeyboard()
             listenImageSearch()
             listenImageCrop()
@@ -137,9 +151,22 @@
     }
 
     const drawNewBbox = (context) => {
-        if (mouse.buttonL === true && currentClass !== null && currentBbox === null) {
-            const width = (mouse.realX - mouse.startRealX)
-            const height = (mouse.realY - mouse.startRealY)
+        if (mouse.buttonL === true && currentClass !== null && currentBbox === null && mouse.startRealX >= 0 && mouse.startRealY >= 0 && mouse.startRealX <= currentImage.width && mouse.startRealY <= currentImage.height) {
+            if (mouse.realX > currentImage.width) {
+                var width = (currentImage.width - mouse.startRealX)
+            } else if (mouse.realX < 0) {
+                var width = - mouse.startRealX 
+            } else {
+                var width = (mouse.realX - mouse.startRealX)
+            }
+            
+            if (mouse.realY > currentImage.height) {
+                var height = (currentImage.height - mouse.startRealY)
+            } else if (mouse.realY < 0) {
+                var height = - mouse.startRealY
+            } else {
+                var height = (mouse.realY - mouse.startRealY)
+            }
 
             setBBoxStyles(context, true)
             context.strokeRect(zoomX(mouse.startRealX), zoomY(mouse.startRealY), zoom(width), zoom(height))
@@ -152,7 +179,7 @@
     }
 
     const drawExistingBboxes = (context) => {
-        const currentBboxes = bboxes[currentImage.name]
+        currentBboxes = bboxes[currentImage.name]
 
         for (let className in currentBboxes) {
             currentBboxes[className].forEach(bbox => {
@@ -282,21 +309,46 @@
             }
         } else if (event.type === "mouseup" || event.type === "mouseout") {
             if (mouse.buttonL === true && currentImage !== null && currentClass !== null) {
-                const movedWidth = Math.max((mouse.startRealX - mouse.realX), (mouse.realX - mouse.startRealX))
-                const movedHeight = Math.max((mouse.startRealY - mouse.realY), (mouse.realY - mouse.startRealY))
-
-                if (movedWidth > minBBoxWidth && movedHeight > minBBoxHeight) { // Only add if bbox is big enough
-                    if (currentBbox === null) { // And only when no other bbox is selected
-                        storeNewBbox(movedWidth, movedHeight)
-                    } else { // Bbox was moved or resized - update original data
-                        updateBboxAfterTransform()
+                if (mouse.startRealX >= 0 && mouse.startRealY >= 0 && mouse.startRealX <= currentImage.width && mouse.startRealY <= currentImage.height) {
+                    if (mouse.realX > currentImage.width) {
+                        var width = (currentImage.width - mouse.startRealX)
+                    } else if (mouse.realX < 0) {
+                        var width = - mouse.startRealX 
+                    } else {
+                        var width = (mouse.realX - mouse.startRealX)
                     }
-                } else { // (un)Mark a bbox
-                    setBboxMarkedState()
-
-                    if (currentBbox !== null) { // Bbox was moved or resized - update original data
-                        updateBboxAfterTransform()
+                    
+                    if (mouse.realY > currentImage.height) {
+                        var height = (currentImage.height - mouse.startRealY)
+                    } else if (mouse.realY < 0) {
+                        var height = - mouse.startRealY
+                    } else {
+                        var height = (mouse.realY - mouse.startRealY)
                     }
+                
+                    const movedWidth = Math.abs(width)
+                    const movedHeight = Math.abs(height)
+
+                    if (movedWidth > minBBoxWidth && movedHeight > minBBoxHeight) { // Only add if bbox is big enough
+                        if (currentBbox === null) { // And only when no other bbox is selected
+                            storeNewBbox(movedWidth, movedHeight)
+                            setCurrentBboxesList()
+                        } else { // Bbox was moved or resized - update original data
+                            updateBboxAfterTransform()
+                        }
+                    } else { // (un)Mark a bbox
+                        setBboxMarkedState()
+                        setCurrentBboxesList()
+
+                        if (currentBbox !== null) { // Bbox was moved or resized - update original data
+                            updateBboxAfterTransform()
+                        }
+                    }
+                }
+                setBboxMarkedState()
+
+                if (currentBbox !== null) { // Bbox was moved or resized - update original data
+                    updateBboxAfterTransform()
                 }
             }
 
@@ -304,8 +356,10 @@
             mouse.buttonL = false
         }
 
-        moveBbox()
-        resizeBbox()
+        if (!lockBboxes) {
+            moveBbox()
+            resizeBbox()
+        }
         changeCursorByLocation()
 
         panImage(xx, yy)
@@ -313,8 +367,8 @@
 
     const storeNewBbox = (movedWidth, movedHeight) => {
         const bbox = {
-            x: Math.min(mouse.startRealX, mouse.realX),
-            y: Math.min(mouse.startRealY, mouse.realY),
+            x: Math.max(Math.min(mouse.startRealX, mouse.realX), 0),
+            y: Math.max(Math.min(mouse.startRealY, mouse.realY), 0),
             width: movedWidth,
             height: movedHeight,
             marked: true,
@@ -364,11 +418,20 @@
         currentBbox.originalWidth = currentBbox.bbox.width
         currentBbox.originalHeight = currentBbox.bbox.height
         currentBbox.moving = false
+        // Interactive labeling of existing bboxes
+        if (classList.length > 1) {
+            classList.options[classListIndex].selected = false
+
+            classListIndex = classes[currentBbox.bbox.class]
+            
+            classList.options[classListIndex].selected = true
+            classList.selectedIndex = classListIndex
+        }
     }
 
     const setBboxMarkedState = () => {
         if (currentBbox === null || (currentBbox.moving === false && currentBbox.resizing === null)) {
-            const currentBboxes = bboxes[currentImage.name]
+            currentBboxes = bboxes[currentImage.name]
 
             let wasInside = false
             let smallestBbox = Number.MAX_SAFE_INTEGER
@@ -424,14 +487,23 @@
             }
 
             if (currentBbox.moving === true) {
-                currentBbox.bbox.x = currentBbox.originalX + (mouse.realX - mouse.startRealX)
-                currentBbox.bbox.y = currentBbox.originalY + (mouse.realY - mouse.startRealY)
+                const newXcand = currentBbox.originalX + (mouse.realX - mouse.startRealX)
+                const newYcand = currentBbox.originalY + (mouse.realY - mouse.startRealY)
+                if (
+                    (newXcand > 0) &&
+                    (newYcand > 0) &&
+                    currentBbox.bbox.width + newXcand <= currentImage.width &&
+                    currentBbox.bbox.height + newYcand <= currentImage.height
+                ) {
+                    currentBbox.bbox.x = newXcand
+                    currentBbox.bbox.y = newYcand
+                }
             }
         }
     }
 
     const resizeBbox = () => {
-        if (mouse.buttonL === true && currentBbox !== null) {
+        if (mouse.buttonL === true && currentBbox !== null && mouse.realX >= 0 && mouse.realX <= currentImage.width && mouse.realY >= 0 && mouse.realY <= currentImage.height) {
             const topLeftX = currentBbox.bbox.x
             const topLeftY = currentBbox.bbox.y
             const bottomLeftX = currentBbox.bbox.x
@@ -486,7 +558,7 @@
 
     const changeCursorByLocation = () => {
         if (currentImage !== null) {
-            const currentBboxes = bboxes[currentImage.name]
+            currentBboxes = bboxes[currentImage.name]
 
             for (let className in currentBboxes) {
                 for (let i = 0; i < currentBboxes[className].length; i++) {
@@ -755,6 +827,7 @@
 
                                     option.value = i
                                     option.innerHTML = rows[i]
+                                    option.label = String(i) + ': ' + rows[i]
 
                                     if (i === 0) {
                                         option.selected = true
@@ -787,12 +860,89 @@
         currentClass = null
     }
 
+    const setCurrentBboxesList = () => {
+        document.getElementById("currentBboxesList").innerHTML = ""
+        const currentBboxesList = document.getElementById("currentBboxesList")
+
+        for (let className in classes) {
+            if (typeof currentBboxes[className] !== "undefined") {
+                for (let i = 0; i < currentBboxes[className].length; i += 1){
+                    const option = document.createElement("option")
+                                                                
+                    option.innerHTML = className
+                    option.label =  className + ' n°' + String(i)
+
+                    if (currentBbox !== null && option.label == currentBbox.bbox.class + ' n°' + String(currentBbox.index)) {
+                        option.selected = true
+                    }
+
+                    currentBboxesList.appendChild(option)
+                }
+            }
+        }
+    }
+
+    const listenBboxesSelect = () => {
+        const currentBboxesList = document.getElementById("currentBboxesList")
+
+        currentBboxesList.addEventListener("click", () => {
+            if (typeof currentBboxesList.options[currentBboxesList.selectedIndex] !== 'undefined'){
+                const label = currentBboxesList.options[currentBboxesList.selectedIndex].label
+                for (let className in classes) {
+                    if (typeof currentBboxes[className] !== 'undefined') {
+                        for (let i = 0; i < currentBboxes[className].length; i += 1){
+                            const bbox = currentBboxes[className][i]
+        
+                            if (label == className + ' n°' + String(i)) {
+                                if (currentBbox !== null) {
+                                    currentBbox.bbox.marked = false
+                                }
+                                currentBbox = {
+                                    bbox: bbox,
+                                    index: i,
+                                    originalX: bbox.x,
+                                    originalY: bbox.y,
+                                    originalWidth: bbox.width,
+                                    originalHeight: bbox.height,
+                                    moving: false,
+                                    resizing: null
+                                }
+                                currentBbox.bbox.marked = true
+                            }
+                        }
+                    }
+                }
+            }
+        })
+    }
+
     const setCurrentClass = () => {
         const classList = document.getElementById("classList")
 
         currentClass = classList.options[classList.selectedIndex].text
 
         if (currentBbox !== null) {
+            currentBboxes = bboxes[currentImage.name]
+            var temp = currentBboxes[currentBbox.bbox.class][currentBbox.index]
+
+            bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1);
+            bboxes[currentImage.name][currentBbox.bbox.class].filter(item => item !== undefined)
+
+            const newClass = currentClass
+            temp.class = newClass
+
+            if (typeof bboxes[currentImage.name][newClass] === "undefined") {
+                bboxes[currentImage.name][newClass] = Array(0)
+            }
+
+            bboxes[currentImage.name][newClass].push(temp)
+            bboxes[currentImage.name][newClass].filter(item => item !== undefined)
+
+            currentBbox.bbox = temp
+            currentBbox.index = bboxes[currentImage.name][newClass].length - 1
+
+            setCurrentBboxesList()
+
             currentBbox.bbox.marked = false // We unmark via reference
             currentBbox = null // and the we delete
         }
@@ -801,10 +951,12 @@
     const listenClassSelect = () => {
         const classList = document.getElementById("classList")
 
-        classList.addEventListener("change", () => {
-            classListIndex = classList.selectedIndex
+        classList.addEventListener("click", () => {
+            if (currentClass != null) {
+                classListIndex = classList.selectedIndex
 
-            setCurrentClass()
+                setCurrentClass()
+            }
         })
     }
 
@@ -855,7 +1007,10 @@
     }
 
     const resetBboxes = () => {
+        document.getElementById("currentBboxesList").innerHTML = ""
+
         bboxes = {}
+        currentBbox = null
     }
 
     const storeBbox = (filename, text) => {
@@ -880,33 +1035,50 @@
                     if (extension === "txt") {
                         const rows = text.split(/[\r\n]+/)
 
-                        for (let i = 0; i < rows.length; i++) {
-                            const cols = rows[i].split(" ")
+                        if (rows.length > 0) { 
+                            const currentBboxesList = document.getElementById("currentBboxesList")
 
-                            cols[0] = parseInt(cols[0])
+                            for (let i = 0; i < rows.length; i++) {
+                                const cols = rows[i].split(" ")
 
-                            for (let className in classes) {
-                                if (classes[className] === cols[0]) {
-                                    if (typeof bbox[className] === "undefined") {
-                                        bbox[className] = []
+                                cols[0] = parseInt(cols[0])
+
+                                for (let className in classes) {
+                                    if (classes[className] === cols[0]) {
+                                        if (typeof bbox[className] === "undefined") {
+                                            bbox[className] = []
+                                        }
+
+                                        // Reverse engineer actual position and dimensions from yolo format
+                                        const width = cols[3] * image.width
+                                        const x = cols[1] * image.width - width * 0.5
+                                        const height = cols[4] * image.height
+                                        const y = cols[2] * image.height - height * 0.5
+
+                                        bbox[className].push({
+                                            x: Math.floor(x),
+                                            y: Math.floor(y),
+                                            width: Math.floor(width),
+                                            height: Math.floor(height),
+                                            marked: false,
+                                            class: className
+                                        })
+                                        
+                                        const option = document.createElement("option")
+                                        
+                                        const indx = bboxes[currentImage.name][className].length - 1
+                                        option.innerHTML = className
+                                        option.label =  className + ' n°' + String(indx)
+                                        option.value = {className, indx}
+
+                                        if (i === 0) {
+                                            option.selected = false
+                                        }
+
+                                        currentBboxesList.appendChild(option)
+
+                                        break
                                     }
-
-                                    // Reverse engineer actual position and dimensions from yolo format
-                                    const width = cols[3] * image.width
-                                    const x = cols[1] * image.width - width * 0.5
-                                    const height = cols[4] * image.height
-                                    const y = cols[2] * image.height - height * 0.5
-
-                                    bbox[className].push({
-                                        x: Math.floor(x),
-                                        y: Math.floor(y),
-                                        width: Math.floor(width),
-                                        height: Math.floor(height),
-                                        marked: false,
-                                        class: className
-                                    })
-
-                                    break
                                 }
                             }
                         }
@@ -915,33 +1087,48 @@
                         const xmlDoc = parser.parseFromString(text, "text/xml")
 
                         const objects = xmlDoc.getElementsByTagName("object")
+                        if (rows.length > 0) { 
+                            const currentBboxesList = document.getElementById("currentBboxesList")
+                            for (let i = 0; i < objects.length; i++) {
+                                const objectName = objects[i].getElementsByTagName("name")[0].childNodes[0].nodeValue
 
-                        for (let i = 0; i < objects.length; i++) {
-                            const objectName = objects[i].getElementsByTagName("name")[0].childNodes[0].nodeValue
+                                for (let className in classes) {
+                                    if (className === objectName) {
+                                        if (typeof bbox[className] === "undefined") {
+                                            bbox[className] = []
+                                        }
 
-                            for (let className in classes) {
-                                if (className === objectName) {
-                                    if (typeof bbox[className] === "undefined") {
-                                        bbox[className] = []
+                                        const bndBox = objects[i].getElementsByTagName("bndbox")[0]
+
+                                        const bndBoxX = bndBox.getElementsByTagName("xmin")[0].childNodes[0].nodeValue
+                                        const bndBoxY = bndBox.getElementsByTagName("ymin")[0].childNodes[0].nodeValue
+                                        const bndBoxMaxX = bndBox.getElementsByTagName("xmax")[0].childNodes[0].nodeValue
+                                        const bndBoxMaxY = bndBox.getElementsByTagName("ymax")[0].childNodes[0].nodeValue
+
+                                        bbox[className].push({
+                                            x: parseInt(bndBoxX),
+                                            y: parseInt(bndBoxY),
+                                            width: parseInt(bndBoxMaxX) - parseInt(bndBoxX),
+                                            height: parseInt(bndBoxMaxY) - parseInt(bndBoxY),
+                                            marked: false,
+                                            class: className
+                                        })
+
+                                        const option = document.createElement("option")
+                                        
+                                        const indx = bboxes[currentImage.name][className].length - 1
+                                        option.innerHTML = className
+                                        option.label =  className + ' n°' + String(indx)
+                                        option.value = {className, indx}
+
+                                        if (i === 0) {
+                                            option.selected = false
+                                        }
+
+                                        currentBboxesList.appendChild(option)
+
+                                        break
                                     }
-
-                                    const bndBox = objects[i].getElementsByTagName("bndbox")[0]
-
-                                    const bndBoxX = bndBox.getElementsByTagName("xmin")[0].childNodes[0].nodeValue
-                                    const bndBoxY = bndBox.getElementsByTagName("ymin")[0].childNodes[0].nodeValue
-                                    const bndBoxMaxX = bndBox.getElementsByTagName("xmax")[0].childNodes[0].nodeValue
-                                    const bndBoxMaxY = bndBox.getElementsByTagName("ymax")[0].childNodes[0].nodeValue
-
-                                    bbox[className].push({
-                                        x: parseInt(bndBoxX),
-                                        y: parseInt(bndBoxY),
-                                        width: parseInt(bndBoxMaxX) - parseInt(bndBoxX),
-                                        height: parseInt(bndBoxMaxY) - parseInt(bndBoxY),
-                                        marked: false,
-                                        class: className
-                                    })
-
-                                    break
                                 }
                             }
                         }
@@ -950,6 +1137,8 @@
             }
         } else {
             const json = JSON.parse(text)
+
+            const currentBboxesList = document.getElementById("currentBboxesList")
 
             for (let i = 0; i < json.annotations.length; i++) {
                 let imageName = null
@@ -1000,6 +1189,19 @@
                             marked: false,
                             class: className
                         })
+
+                        const option = document.createElement("option")
+                                        
+                        const indx = bboxes[currentImage.name][className].length - 1
+                        option.innerHTML = className
+                        option.label =  className + ' n°' + String(indx)
+                        option.value = {className, indx}
+
+                        if (i === 0) {
+                            option.selected = false
+                        }
+
+                        currentBboxesList.appendChild(option)
 
                         break
                     }
@@ -1148,12 +1350,12 @@
                     for (let i = 0; i < bboxes[imageName][className].length; i++) {
                         const bbox = bboxes[imageName][className][i]
 
-                        const segmentation = [
+                        const segmentation = [[
                             bbox.x, bbox.y,
                             bbox.x, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y
-                        ]
+                        ]]
 
                         result.annotations.push({
                             segmentation: segmentation,
@@ -1188,6 +1390,16 @@
         })
     }
 
+    const listenLockBboxes = () => {
+        document.getElementById("lockBboxes").addEventListener("change", (event) => {
+            if (event.currentTarget.checked) {
+                lockBboxes = true;
+                } else {
+                lockBboxes = false;
+                }
+        })
+    }
+
     const listenKeyboard = () => {
         const imageList = document.getElementById("imageList")
         const classList = document.getElementById("classList")
@@ -1199,6 +1411,8 @@
                 if (currentBbox !== null) {
                     bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1)
                     currentBbox = null
+
+                    setCurrentBboxesList()
 
                     document.body.style.cursor = "default"
                 }
@@ -1285,6 +1499,57 @@
 
                 event.preventDefault()
             }
+
+            var class_keys = Array(10).fill().map((d, i) => i + 48)
+            class_keys = class_keys.map(String)
+
+            var keyMap = {}
+            var i = 0
+            for (const classe_key in class_keys) {
+                keyMap[classe_key] = i
+                i+=1
+            }
+            
+            if ((event.shiftKey || event.key in class_keys) && currentBbox !== null) {
+                if (event.code.startsWith('Digit') && keyMap[event.key] in Object.values(classes)) {
+                    currentBboxes = bboxes[currentImage.name]
+                    var temp = currentBboxes[currentBbox.bbox.class][currentBbox.index]
+
+                    bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1);
+                    bboxes[currentImage.name][currentBbox.bbox.class].filter(item => item !== undefined)
+
+                    const newClassInd = keyMap[event.key]
+                    const newClass = Object.keys(classes).find(k => classes[k] === newClassInd);
+                    temp.class = newClass
+
+                    if (typeof bboxes[currentImage.name][newClass] === "undefined") {
+                        bboxes[currentImage.name][newClass] = Array(0)
+                    }
+
+                    bboxes[currentImage.name][newClass].push(temp)
+                    bboxes[currentImage.name][newClass].filter(item => item !== undefined)
+
+                    currentBbox.bbox = temp
+                    currentBbox.index = bboxes[currentImage.name][newClass].length - 1
+
+                    if (classList.length > 1) {
+                        classList.options[classListIndex].selected = false
+            
+                        classListIndex = classes[currentBbox.bbox.class]
+                        
+                        classList.options[classListIndex].selected = true
+                        classList.selectedIndex = classListIndex
+                    }
+                
+                    currentClass = currentBbox.bbox.class
+
+                    setCurrentBboxesList()
+
+                    currentBbox.bbox.marked = false
+                    currentBbox = null
+
+                    }
+                }
         })
     }
 
