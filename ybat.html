@@ -11,6 +11,11 @@
     <script src="filesaver.min.js"></script>
 
     <script src="ybat.js"></script>
+    <style>
+        canvas {
+            background-color: #f1f1f1;
+        }
+    </style>
 </head>
 <body>
     <div class="container" id="container">
@@ -25,20 +30,26 @@
                 <label for="imageSearch">Search:</label>
                 <input type="text" id="imageSearch" name="imageSearch" />
 
-                <label for="imageList"></label><select name="imageList" id="imageList" size="10" multiple></select>
+                <label for="imageList"></label><select name="imageList" id="imageList" size="10"></select>
 
                 <div id="imageInformation"></div>
                 <hr />
 
                 <label for="classes">Classes:</label>
                 <input type="file" id="classes" name="classes" accept="text/plain" />
-                <label for="classList"></label><select name="classList" id="classList" size="10" multiple></select>
+                <label for="classList"></label><select name="classList" id="classList" size="10"></select>
 
                 <div id="bboxInformation"></div>
                 <hr />
 
                 <label for="bboxes">Bboxes:</label>
                 <input type="file" id="bboxes" name="bboxes[]" accept="text/plain, application/zip" disabled multiple />
+
+                <div>
+                    <input type="checkbox" id="lockBboxes" name="lockBboxes" checked>
+                    <label for="lockBboxes">Lock Bboxes</label>
+                </div>
+                
                 <input type="button" name="restoreBboxes" id="restoreBboxes" value="Restore" disabled />
                 <input type="button" name="saveBboxes" id="saveBboxes" value="Save YOLO" />
 
@@ -80,8 +91,12 @@
 
         <div class="right" id="right">
             <canvas id="canvas"></canvas>
-            <canvas id="hiddenCanvas"></canvas>
         </div>
+
+        <div class="rightBboxes" id="rightBboxes">
+            <label for="currentBboxesList"> Current image Bboxes:</label>
+            <select name="currentBboxesList" id="currentBboxesList" size="25"></select>
+        </div> 
     </div>
 </body>
 </html>
