@@ -8,6 +8,8 @@
 
     // For internal use
     
+
+
     const fontColor = "#001f3f" // Base font color
     const borderColor = "#001f3f" // Base bbox border color
     const backgroundColor = "rgba(0, 116, 217, 0.2)" // Base bbox fill color
@@ -31,6 +33,8 @@
     let images = {}
     let classes = {}
     let bboxes = {}
+
+    let hiddenCanvas = {}
 
     const extensions = ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"]
 
@@ -121,7 +125,6 @@
 
     const listenCanvas = () => {
         canvas = new Canvas("canvas", document.getElementById("right").clientWidth, window.innerHeight - 20)
-
         canvas.on("draw", (context) => {
             if (currentImage !== null) {
                 drawImage(context)
@@ -332,13 +335,14 @@
                     if (movedWidth > minBBoxWidth && movedHeight > minBBoxHeight) { // Only add if bbox is big enough
                         if (currentBbox === null) { // And only when no other bbox is selected
                             storeNewBbox(movedWidth, movedHeight)
-                            setCurrentBboxesList()
+                            setCurrentBboxesList(currentImage.name)
                         } else { // Bbox was moved or resized - update original data
                             updateBboxAfterTransform()
+
                         }
                     } else { // (un)Mark a bbox
                         setBboxMarkedState()
-                        setCurrentBboxesList()
+                        setCurrentBboxesList(currentImage.name)
 
                         if (currentBbox !== null) { // Bbox was moved or resized - update original data
                             updateBboxAfterTransform()
@@ -360,8 +364,8 @@
             moveBbox()
             resizeBbox()
         }
-        changeCursorByLocation()
 
+        changeCursorByLocation()
         panImage(xx, yy)
     }
 
@@ -788,6 +792,8 @@
             imageListIndex = imageList.selectedIndex
 
             setCurrentImage(images[imageList.options[imageListIndex].innerHTML])
+            const newImageName = images[imageList.options[imageListIndex].innerHTML].meta.name
+            setCurrentBboxesList(newImageName)
         })
     }
 
@@ -860,23 +866,27 @@
         currentClass = null
     }
 
-    const setCurrentBboxesList = () => {
+    const setCurrentBboxesList = (imageName) => {
         document.getElementById("currentBboxesList").innerHTML = ""
         const currentBboxesList = document.getElementById("currentBboxesList")
 
-        for (let className in classes) {
-            if (typeof currentBboxes[className] !== "undefined") {
-                for (let i = 0; i < currentBboxes[className].length; i += 1){
-                    const option = document.createElement("option")
-                                                                
-                    option.innerHTML = className
-                    option.label =  className + ' n°' + String(i)
+        currentBboxes = bboxes[imageName]
 
-                    if (currentBbox !== null && option.label == currentBbox.bbox.class + ' n°' + String(currentBbox.index)) {
-                        option.selected = true
+        if (typeof currentBboxes !== 'undefined') {
+            for (let className in classes) {
+                if (typeof currentBboxes[className] !== "undefined") {
+                    for (let i = 0; i < currentBboxes[className].length; i += 1){
+                        const option = document.createElement("option")
+                                                                    
+                        option.innerHTML = className
+                        option.label =  className + ' n°' + String(i)
+    
+                        if (currentBbox !== null && option.label == currentBbox.bbox.class + ' n°' + String(currentBbox.index)) {
+                            option.selected = true
+                        }
+    
+                        currentBboxesList.appendChild(option)
                     }
-
-                    currentBboxesList.appendChild(option)
                 }
             }
         }
@@ -941,7 +951,7 @@
             currentBbox.bbox = temp
             currentBbox.index = bboxes[currentImage.name][newClass].length - 1
 
-            setCurrentBboxesList()
+            setCurrentBboxesList(currentImage.name)
 
             currentBbox.bbox.marked = false // We unmark via reference
             currentBbox = null // and the we delete
@@ -1002,6 +1012,8 @@
                         reader.readAsArrayBuffer(event.target.files[i])
                     }
                 }
+
+                setCurrentBboxesList(currentImage.name)
             }
         })
     }
@@ -1035,9 +1047,7 @@
                     if (extension === "txt") {
                         const rows = text.split(/[\r\n]+/)
 
-                        if (rows.length > 0) { 
-                            const currentBboxesList = document.getElementById("currentBboxesList")
-
+                        if (rows.length > 0) {  
                             for (let i = 0; i < rows.length; i++) {
                                 const cols = rows[i].split(" ")
 
@@ -1063,19 +1073,6 @@
                                             marked: false,
                                             class: className
                                         })
-                                        
-                                        const option = document.createElement("option")
-                                        
-                                        const indx = bboxes[currentImage.name][className].length - 1
-                                        option.innerHTML = className
-                                        option.label =  className + ' n°' + String(indx)
-                                        option.value = {className, indx}
-
-                                        if (i === 0) {
-                                            option.selected = false
-                                        }
-
-                                        currentBboxesList.appendChild(option)
 
                                         break
                                     }
@@ -1412,11 +1409,10 @@
                     bboxes[currentImage.name][currentBbox.bbox.class].splice(currentBbox.index, 1)
                     currentBbox = null
 
-                    setCurrentBboxesList()
+                    setCurrentBboxesList(currentImage.name)
 
                     document.body.style.cursor = "default"
                 }
-
                 event.preventDefault()
             }
 
@@ -1437,6 +1433,8 @@
 
                     document.body.style.cursor = "default"
                 }
+                const newImageName = images[imageList.options[imageListIndex].innerHTML].meta.name
+                setCurrentBboxesList(newImageName)
 
                 event.preventDefault()
             }
@@ -1458,6 +1456,8 @@
 
                     document.body.style.cursor = "default"
                 }
+                const newImageName = images[imageList.options[imageListIndex].innerHTML].meta.name
+                setCurrentBboxesList(newImageName)
 
                 event.preventDefault()
             }
@@ -1543,13 +1543,14 @@
                 
                     currentClass = currentBbox.bbox.class
 
-                    setCurrentBboxesList()
+                    setCurrentBboxesList(currentImage.name)
 
                     currentBbox.bbox.marked = false
                     currentBbox = null
 
                     }
                 }
+
         })
     }
 
@@ -1579,7 +1580,7 @@
                     document.getElementById("imageList").selectedIndex = images[imageName].index
 
                     setCurrentImage(images[imageName])
-
+                    setCurrentBboxesList(imageName)
                     break
                 }
             }
