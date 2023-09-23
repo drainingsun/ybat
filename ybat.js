@@ -28,6 +28,7 @@
     let images = {}
     let classes = {}
     let bboxes = {}
+	const bboxBgColorStore = new Map();
 
     const extensions = ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"]
 
@@ -84,6 +85,10 @@
     } else {
         alert("Restore function is not supported. If you need it, use Chrome or Firefox instead.")
     }
+
+    window.onbeforeunload = function(){
+        return 'Are you sure you want to leave the page?';
+    };
 
     // Start everything
     document.onreadystatechange = () => {
@@ -156,10 +161,15 @@
 
         for (let className in currentBboxes) {
             currentBboxes[className].forEach(bbox => {
+                if(!bboxBgColorStore.has(bbox.class)) {
+					bboxBgColorStore.set(bbox.class, bbox?.bgColor);
+				}
                 setFontStyles(context, bbox.marked)
-                context.fillText(className, zoomX(bbox.x), zoomY(bbox.y - 2))
+				if (currentBbox !== null && currentBbox.index === i && bbox.marked) {
+					context.fillText(className, zoomX(bbox.x), zoomY(bbox.y - 2))
+				}
 
-                setBBoxStyles(context, bbox.marked)
+				setBBoxStyles(context, bbox.marked, bboxBgColorStore.get(bbox.class))
                 context.strokeRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
                 context.fillRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
 
@@ -1148,12 +1158,12 @@
                     for (let i = 0; i < bboxes[imageName][className].length; i++) {
                         const bbox = bboxes[imageName][className][i]
 
-                        const segmentation = [
+                        const segmentation = [[
                             bbox.x, bbox.y,
                             bbox.x, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y + bbox.height,
                             bbox.x + bbox.width, bbox.y
-                        ]
+                        ]]
 
                         result.annotations.push({
                             segmentation: segmentation,
@@ -1191,9 +1201,30 @@
     const listenKeyboard = () => {
         const imageList = document.getElementById("imageList")
         const classList = document.getElementById("classList")
+		let copiedBbox;
 
         document.addEventListener("keydown", (event) => {
             const key = event.keyCode || event.charCode
+
+            // Copying event capture
+			if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+				if(!currentBbox) return;
+
+				copiedBbox = {...currentBbox.bbox}
+				copiedBbox.marked = false;
+			}
+
+			// Pasting event capture
+			if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+				if(!copiedBbox) return;
+
+				copiedBbox.x = mouse.realX
+				copiedBbox.y = mouse.realY
+				if(!bboxes[currentImage.name] || !bboxes[currentImage.name][copiedBbox.class]) {
+					bboxes[currentImage.name] = {...bboxes[currentImage.name], [copiedBbox.class]: []}
+				}
+				bboxes[currentImage.name][copiedBbox.class].push({...copiedBbox})
+			}
 
             if (key === 46 || (key === 8 && event.metaKey === true)) {
                 if (currentBbox !== null) {
