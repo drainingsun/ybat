@@ -1201,9 +1201,30 @@
     const listenKeyboard = () => {
         const imageList = document.getElementById("imageList")
         const classList = document.getElementById("classList")
+		let copiedBbox;
 
         document.addEventListener("keydown", (event) => {
             const key = event.keyCode || event.charCode
+
+            // Copying event capture
+			if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+				if(!currentBbox) return;
+
+				copiedBbox = {...currentBbox.bbox}
+				copiedBbox.marked = false;
+			}
+
+			// Pasting event capture
+			if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+				if(!copiedBbox) return;
+
+				copiedBbox.x = mouse.realX
+				copiedBbox.y = mouse.realY
+				if(!bboxes[currentImage.name] || !bboxes[currentImage.name][copiedBbox.class]) {
+					bboxes[currentImage.name] = {...bboxes[currentImage.name], [copiedBbox.class]: []}
+				}
+				bboxes[currentImage.name][copiedBbox.class].push({...copiedBbox})
+			}
 
             if (key === 46 || (key === 8 && event.metaKey === true)) {
                 if (currentBbox !== null) {
