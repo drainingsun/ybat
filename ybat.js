@@ -28,6 +28,7 @@
     let images = {}
     let classes = {}
     let bboxes = {}
+	const bboxBgColorStore = new Map();
 
     const extensions = ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"]
 
@@ -160,10 +161,15 @@
 
         for (let className in currentBboxes) {
             currentBboxes[className].forEach(bbox => {
+                if(!bboxBgColorStore.has(bbox.class)) {
+					bboxBgColorStore.set(bbox.class, bbox?.bgColor);
+				}
                 setFontStyles(context, bbox.marked)
-                context.fillText(className, zoomX(bbox.x), zoomY(bbox.y - 2))
+				if (currentBbox !== null && currentBbox.index === i && bbox.marked) {
+					context.fillText(className, zoomX(bbox.x), zoomY(bbox.y - 2))
+				}
 
-                setBBoxStyles(context, bbox.marked)
+				setBBoxStyles(context, bbox.marked, bboxBgColorStore.get(bbox.class))
                 context.strokeRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
                 context.fillRect(zoomX(bbox.x), zoomY(bbox.y), zoom(bbox.width), zoom(bbox.height))
 
