@@ -85,6 +85,10 @@
         alert("Restore function is not supported. If you need it, use Chrome or Firefox instead.")
     }
 
+    window.onbeforeunload = function(){
+        return 'Are you sure you want to leave the page?';
+    };
+
     // Start everything
     document.onreadystatechange = () => {
         if (document.readyState === "complete") {
